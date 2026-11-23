@@ -27,30 +27,30 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#F8F6F0]/95 backdrop-blur-md border-b border-[#E4DFD2] no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Single-line Brand Wordmark */}
+    <header className="sticky top-0 z-40 w-full bg-[#F8F6F0]/95 backdrop-blur-md border-b border-[#E4DFD2] no-print">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 lg:gap-8">
+        {/* Zone 1: Single-line Brand Wordmark (shrinks gracefully on narrow mobile screens) */}
         <button
           type="button"
           onClick={() => handleNav('home')}
-          className="flex items-center gap-2.5 text-left whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D4A32] rounded-md"
+          className="flex items-center gap-2 sm:gap-2.5 text-left min-w-0 flex-1 lg:flex-none lg:shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D4A32] rounded-md"
         >
           {siteSettings.logoUrl ? (
             <img
               src={siteSettings.logoUrl}
               alt={siteSettings.siteName}
               referrerPolicy="no-referrer"
-              className="w-8 h-8 rounded-md object-cover border border-[#D8D1C1]"
+              className="w-8 h-8 rounded-md object-cover border border-[#D8D1C1] shrink-0"
             />
           ) : (
             <span
-              className="w-8 h-8 rounded-md bg-[#0D4A32] text-[#E5C987] flex items-center justify-center font-editorial font-bold text-sm border border-[#C9A24D]/40"
+              className="w-8 h-8 rounded-md bg-[#0D4A32] text-[#E5C987] flex items-center justify-center font-editorial font-bold text-sm border border-[#C9A24D]/40 shrink-0"
               aria-hidden="true"
             >
               জ
             </span>
           )}
-          <span className="font-editorial text-base sm:text-lg font-bold tracking-tight text-[#0B3B28] truncate max-w-[200px] sm:max-w-none">
+          <span className="font-editorial text-sm sm:text-base lg:text-lg font-bold tracking-tight text-[#0B3B28] truncate block">
             {siteSettings.siteName}
           </span>
         </button>
@@ -77,30 +77,35 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
         </nav>
 
         {/* Zone 3: 1 Primary Action Button + Mobile Menu Trigger */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {user ? (
             <button
               type="button"
               onClick={() => handleNav(isAdmin && !myMember ? 'admin' : 'dashboard')}
-              className="px-4 py-2 text-xs sm:text-sm font-medium bg-[#0D4A32] text-[#F8F6F0] rounded-lg hover:bg-[#093624] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium bg-[#0D4A32] text-[#F8F6F0] rounded-lg hover:bg-[#093624] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              {isAdmin && activeRoute === 'dashboard' ? 'অ্যাডমিন প্যানেল' : 'আমার ড্যাশবোর্ড'}
+              <span className="sm:hidden">ড্যাশবোর্ড</span>
+              <span className="hidden sm:inline">
+                {isAdmin && activeRoute === 'dashboard' ? 'অ্যাডমিন প্যানেল' : 'আমার ড্যাশবোর্ড'}
+              </span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onOpenAuth}
-              className="px-4 py-2 text-xs sm:text-sm font-medium bg-[#0D4A32] text-[#F8F6F0] rounded-lg hover:bg-[#093624] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium bg-[#0D4A32] text-[#F8F6F0] rounded-lg hover:bg-[#093624] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              লগইন ও নিবন্ধন
+              <span className="sm:hidden">লগইন</span>
+              <span className="hidden sm:inline">লগইন ও নিবন্ধন</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label="মেনু খুলুন"
-            className="lg:hidden p-2 rounded-lg text-[#0B3B28] hover:bg-[#EFECE3] transition-colors cursor-pointer"
+            aria-label={mobileOpen ? 'মেনু বন্ধ করুন' : 'মেনু খুলুন'}
+            aria-expanded={mobileOpen}
+            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#0B3B28] hover:bg-[#EFECE3] transition-colors shrink-0 cursor-pointer"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -109,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-[#E4DFD2] bg-[#F8F6F0] px-4 py-4 space-y-1">
+        <div className="lg:hidden border-t border-[#E4DFD2] bg-[#F8F6F0] px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto shadow-lg">
           <button
             type="button"
             onClick={() => handleNav('home')}
@@ -131,31 +136,54 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
               {item.label}
             </button>
           ))}
-          <div className="pt-2 mt-2 border-t border-[#E4DFD2] space-y-1">
-            <button
-              type="button"
-              onClick={() => handleNav('register')}
-              className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium text-[#0B3B28] hover:bg-[#EFECE3] cursor-pointer"
-            >
-              সদস্য নিবন্ধন ফর্ম
-            </button>
-            {user && (
-              <button
-                type="button"
-                onClick={() => handleNav('dashboard')}
-                className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium text-[#0B3B28] hover:bg-[#EFECE3] cursor-pointer"
-              >
-                আমার ড্যাশবোর্ড
-              </button>
-            )}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => handleNav('admin')}
-                className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium text-[#8B641E] hover:bg-[#EFECE3] cursor-pointer"
-              >
-                প্রশাসনিক প্যানেল (অ্যাডমিন)
-              </button>
+
+          <div className="pt-3 mt-2 border-t border-[#E4DFD2] space-y-2">
+            {!user ? (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    onOpenAuth();
+                  }}
+                  className="w-full text-center px-3 py-2.5 rounded-lg bg-[#0D4A32] text-white text-sm font-semibold hover:bg-[#093624] transition-colors cursor-pointer"
+                >
+                  লগইন করুন
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNav('register')}
+                  className="w-full text-center px-3 py-2.5 rounded-lg border border-[#0D4A32] text-[#0D4A32] bg-white text-sm font-semibold hover:bg-[#EFECE3] transition-colors cursor-pointer"
+                >
+                  নিবন্ধন করুন
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNav('register')}
+                  className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium text-[#0B3B28] hover:bg-[#EFECE3] cursor-pointer"
+                >
+                  {myMember ? 'প্রোফাইল সম্পাদনা' : 'সদস্য নিবন্ধন ফর্ম'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNav('dashboard')}
+                  className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium text-[#0B3B28] hover:bg-[#EFECE3] cursor-pointer"
+                >
+                  আমার ড্যাশবোর্ড
+                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => handleNav('admin')}
+                    className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-semibold text-[#8B641E] bg-[#F8F3E6] hover:bg-[#EFE6CE] cursor-pointer"
+                  >
+                    প্রশাসনিক প্যানেল (অ্যাডমিন)
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

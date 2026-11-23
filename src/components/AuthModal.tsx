@@ -49,20 +49,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4">
-      <div className="bg-white border border-[#E4DFD2] rounded-xl max-w-md w-full p-6 sm:p-7 relative">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white border border-[#E4DFD2] rounded-xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-7 relative">
         <button
           type="button"
           onClick={onClose}
           aria-label="বন্ধ করুন"
-          className="absolute top-4 right-4 p-2 rounded-lg text-[#4A5951] hover:bg-[#F3F0E7] cursor-pointer"
+          className="absolute top-3.5 right-3.5 p-2 rounded-lg text-[#4A5951] hover:bg-[#F3F0E7] cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-6">
+        <div className="mb-5 pr-8">
           <p className="text-xs font-medium text-[#8B641E] mb-1">নিরাপদ সদস্য প্রবেশাধিকার</p>
-          <h2 className="font-editorial text-2xl font-bold text-[#0B3B28]">লগইন ও নিবন্ধন</h2>
+          <h2 className="font-editorial text-xl sm:text-2xl font-bold text-[#0B3B28]">লগইন ও নিবন্ধন</h2>
           <p className="text-xs text-[#4A5951] mt-1">
             জামেউল উলুম ২০২২-২৩ ব্যাচের ডিজিটাল পরিবারে যুক্ত হতে আপনার অ্যাকাউন্টে প্রবেশ করুন।
           </p>
@@ -73,10 +73,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           type="button"
           disabled={loading}
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-[#0D4A32] text-white text-sm font-semibold hover:bg-[#093624] disabled:opacity-60 transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-lg bg-[#0D4A32] text-white text-xs sm:text-sm font-semibold hover:bg-[#093624] disabled:opacity-60 transition-colors text-center cursor-pointer"
         >
-          <ShieldCheck className="w-4 h-4 text-[#E5C987]" />
-          {loading ? 'প্রবেশ করা হচ্ছে...' : 'গুগল অ্যাকাউন্ট দিয়ে প্রবেশ করুন (দ্রুত ও নিরাপদ)'}
+          <ShieldCheck className="w-4 h-4 text-[#E5C987] shrink-0" />
+          <span>{loading ? 'প্রবেশ করা হচ্ছে...' : 'গুগল অ্যাকাউন্ট দিয়ে প্রবেশ করুন'}</span>
         </button>
 
         <div className="my-5 flex items-center gap-3 text-xs text-[#6B7A72]">

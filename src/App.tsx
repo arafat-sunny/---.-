@@ -59,7 +59,7 @@ function AppShell() {
   const registrationShareUrl = `${window.location.origin}/?register=1`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F6F0] text-[#17211C]">
+    <div className="min-h-screen w-full overflow-x-clip flex flex-col bg-[#F8F6F0] text-[#17211C]">
       <Navbar
         activeRoute={route}
         onNavigate={navigate}

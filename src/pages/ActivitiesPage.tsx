@@ -377,21 +377,21 @@ export const ActivitiesPage: React.FC<{ onOpenAuth: () => void }> = ({ onOpenAut
           </p>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-[#EFECE3] rounded-lg self-start">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 bg-[#EFECE3] rounded-lg self-start max-w-full">
           <button
             type="button"
             onClick={() => setTab('notices')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
               tab === 'notices' ? 'bg-white text-[#0B3B28] shadow-sm' : 'text-[#4A5951]'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
-            নোটিশ বোর্ড ({toBengaliNumber(announcements.length)})
+            নোটিশ ({toBengaliNumber(announcements.length)})
           </button>
           <button
             type="button"
             onClick={() => setTab('events')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
               tab === 'events' ? 'bg-white text-[#0B3B28] shadow-sm' : 'text-[#4A5951]'
             }`}
           >
@@ -401,7 +401,7 @@ export const ActivitiesPage: React.FC<{ onOpenAuth: () => void }> = ({ onOpenAut
           <button
             type="button"
             onClick={() => setTab('collaboration')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md cursor-pointer whitespace-nowrap ${
               tab === 'collaboration' ? 'bg-white text-[#0B3B28] shadow-sm' : 'text-[#4A5951]'
             }`}
           >

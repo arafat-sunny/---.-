@@ -7,6 +7,12 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
   html {
     font-family: "Hind Siliguri", system-ui, -apple-system, sans-serif;
     scroll-behavior: smooth;
