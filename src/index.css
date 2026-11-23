@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Noto Serif Bengali", Georgia, serif;
+  --font-sans: "Hind Siliguri", system-ui, -apple-system, sans-serif;
+  --font-arabic: "Amiri", Georgia, serif;
+}
+
+@layer base {
+  html {
+    font-family: "Hind Siliguri", system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+    background-color: #F8F6F0;
+    color: #17211C;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: "Noto Serif Bengali", Georgia, serif;
+    text-wrap: balance;
+  }
+
+  .font-arabic {
+    font-family: "Amiri", Georgia, serif;
+  }
+}
+
+/* Subtle Islamic geometric lattice backdrop (used with extreme restraint) */
+.islamic-lattice {
+  background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C9A24D' stroke-width='0.7' stroke-opacity='0.18'%3E%3Cpath d='M32 0L40 24L64 32L40 40L32 64L24 40L0 32L24 24Z'/%3E%3Ccircle cx='32' cy='32' r='6'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.islamic-lattice-light {
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%230D4A32' stroke-width='0.6' stroke-opacity='0.06'%3E%3Cpath d='M36 0L45 27L72 36L45 45L36 72L27 45L0 36L27 27Z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Clean print formatting for Admin Member Directory PDF export */
+@media print {
+  header, footer, nav, .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

@@ -1,0 +1,953 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==================== PRIMITIVES ====================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email == 'arafatsunnythree@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isApprovedMember() {
+      return isVerified() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/members/$(request.auth.uid)).data.status == 'approved')
+      );
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptionalNumber(data, field, minVal, maxVal) {
+      return !(field in data) || (data[field] is number && data[field] >= minVal && data[field] <= maxVal);
+    }
+
+    function isBoundedStringList(val, maxItems) {
+      return val is list && val.size() <= maxItems && (val.size() == 0 || (val[0] is string && val[0].size() <= 120));
+    }
+
+    function isBoundedImageList(val, maxItems) {
+      return val is list && val.size() <= maxItems && (val.size() == 0 || (val[0] is string && val[0].size() <= 350000));
+    }
+
+    // ==================== VALIDATION BLUEPRINTS ====================
+
+    function isValidMember(data, memberId) {
+      return data.keys().hasAll([
+          'uid', 'fullName', 'district', 'lastJamaat', 'jamaats',
+          'completedDawra', 'connectedToMadrasah', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'fullName', 'photoUrl', 'profession', 'professionCategory',
+          'workplace', 'studyInstitution', 'currentArea', 'district', 'upazila',
+          'jamaats', 'studyStartYear', 'studyEndYear', 'lastJamaat',
+          'completedDawra', 'connectedToMadrasah', 'bio', 'skills',
+          'website', 'facebook', 'otherSocial', 'birthDatePublic',
+          'showPhoneToMembers', 'showAddressToMembers', 'showFamilyToMembers',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == memberId && isValidId(data.uid)
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && isOptionalString(data, 'photoUrl', 350000)
+        && isOptionalString(data, 'profession', 120)
+        && (!('professionCategory' in data) || data.professionCategory in [
+          'শিক্ষকতা', 'ইমামতি ও খতিব', 'ব্যবসা ও উদ্যোক্তা', 'চাকরি',
+          'গবেষণা ও উচ্চশিক্ষা', 'লেখালেখি ও অনুবাদ', 'প্রযুক্তি ও ফ্রিল্যান্সিং', 'অন্যান্য'
+        ])
+        && isOptionalString(data, 'workplace', 160)
+        && isOptionalString(data, 'studyInstitution', 160)
+        && isOptionalString(data, 'currentArea', 160)
+        && data.district is string && data.district.size() >= 2 && data.district.size() <= 80
+        && isOptionalString(data, 'upazila', 80)
+        && isBoundedStringList(data.jamaats, 15) && data.jamaats.size() >= 1
+        && isOptionalString(data, 'studyStartYear', 16)
+        && isOptionalString(data, 'studyEndYear', 16)
+        && data.lastJamaat is string && data.lastJamaat.size() >= 2 && data.lastJamaat.size() <= 60
+        && data.completedDawra is bool
+        && data.connectedToMadrasah is bool
+        && isOptionalString(data, 'bio', 1200)
+        && (!('skills' in data) || isBoundedStringList(data.skills, 15))
+        && isOptionalString(data, 'website', 250)
+        && isOptionalString(data, 'facebook', 250)
+        && isOptionalString(data, 'otherSocial', 250)
+        && isOptionalString(data, 'birthDatePublic', 16)
+        && (!('showPhoneToMembers' in data) || data.showPhoneToMembers is bool)
+        && (!('showAddressToMembers' in data) || data.showAddressToMembers is bool)
+        && (!('showFamilyToMembers' in data) || data.showFamilyToMembers is bool)
+        && data.status in ['pending', 'approved', 'rejected', 'suspended', 'inactive']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMemberPrivate(data, memberId) {
+      return data.keys().hasAll(['uid', 'fatherName', 'phone', 'consentGiven', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid', 'fatherName', 'motherName', 'birthDate', 'phone', 'altPhone',
+          'email', 'presentAddress', 'permanentAddress', 'maritalStatus',
+          'marriageYear', 'childrenCount', 'sonsCount', 'daughtersCount',
+          'consentGiven', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == memberId && isValidId(data.uid)
+        && data.fatherName is string && data.fatherName.size() >= 2 && data.fatherName.size() <= 120
+        && isOptionalString(data, 'motherName', 120)
+        && isOptionalString(data, 'birthDate', 20)
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 30
+        && isOptionalString(data, 'altPhone', 30)
+        && isOptionalString(data, 'email', 160)
+        && isOptionalString(data, 'presentAddress', 300)
+        && isOptionalString(data, 'permanentAddress', 300)
+        && (!('maritalStatus' in data) || data.maritalStatus in ['অবিবাহিত', 'বিবাহিত', 'প্রকাশে অনিচ্ছুক'])
+        && isOptionalString(data, 'marriageYear', 12)
+        && isOptionalNumber(data, 'childrenCount', 0, 20)
+        && isOptionalNumber(data, 'sonsCount', 0, 20)
+        && isOptionalNumber(data, 'daughtersCount', 0, 20)
+        && data.consentGiven is bool && data.consentGiven == true
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMemberShared(data, memberId) {
+      return data.keys().hasAll(['uid', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid', 'sharedPhone', 'sharedAltPhone', 'sharedAddress',
+          'sharedMaritalStatus', 'sharedMarriageYear', 'sharedChildrenSummary', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == memberId && isValidId(data.uid)
+        && isOptionalString(data, 'sharedPhone', 30)
+        && isOptionalString(data, 'sharedAltPhone', 30)
+        && isOptionalString(data, 'sharedAddress', 300)
+        && isOptionalString(data, 'sharedMaritalStatus', 40)
+        && isOptionalString(data, 'sharedMarriageYear', 12)
+        && isOptionalString(data, 'sharedChildrenSummary', 120)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMemberEducation(data, memberId) {
+      return data.keys().hasAll([
+          'uid', 'jamaats', 'lastJamaat', 'completedDawra', 'connectedToMadrasah',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'jamaats', 'startYear', 'endYear', 'lastJamaat',
+          'completedDawra', 'connectedToMadrasah', 'favoriteUstads',
+          'academicNotes', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == memberId && isValidId(data.uid)
+        && isBoundedStringList(data.jamaats, 15) && data.jamaats.size() >= 1
+        && isOptionalString(data, 'startYear', 16)
+        && isOptionalString(data, 'endYear', 16)
+        && data.lastJamaat is string && data.lastJamaat.size() >= 2 && data.lastJamaat.size() <= 60
+        && data.completedDawra is bool
+        && data.connectedToMadrasah is bool
+        && isOptionalString(data, 'favoriteUstads', 400)
+        && isOptionalString(data, 'academicNotes', 600)
+        && data.status in ['pending', 'approved']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMemory(data) {
+      return data.keys().hasAll([
+          'authorId', 'authorName', 'title', 'content', 'category',
+          'imageUrls', 'status', 'likesCount', 'commentsCount', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId', 'authorName', 'authorPhoto', 'title', 'content', 'category',
+          'imageUrls', 'status', 'likesCount', 'commentsCount', 'createdAt', 'updatedAt'
+        ])
+        && data.authorId is string && isValidId(data.authorId)
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && isOptionalString(data, 'authorPhoto', 350000)
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && data.content is string && data.content.size() >= 10 && data.content.size() <= 6000
+        && data.category in ['স্মৃতিচারণ', 'পুরোনো ছবি', 'উস্তাদদের স্মৃতি', 'সহপাঠীদের স্মৃতি', 'মাদরাসার অনুষ্ঠান', 'মজার ঘটনা', 'বিশেষ অনুভূতি']
+        && isBoundedImageList(data.imageUrls, 4)
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.likesCount is number && data.likesCount >= 0 && data.likesCount <= 100000
+        && data.commentsCount is number && data.commentsCount >= 0 && data.commentsCount <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidComment(data, memoryId) {
+      return data.keys().hasAll(['memoryId', 'authorId', 'authorName', 'content', 'createdAt'])
+        && data.keys().hasOnly(['memoryId', 'authorId', 'authorName', 'content', 'createdAt'])
+        && data.memoryId == memoryId
+        && data.authorId is string && data.authorId == request.auth.uid && isValidId(data.authorId)
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 1000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidReaction(data, memoryId, userId) {
+      return data.keys().hasAll(['memoryId', 'userId', 'type', 'createdAt'])
+        && data.keys().hasOnly(['memoryId', 'userId', 'type', 'createdAt'])
+        && data.memoryId == memoryId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.type in ['love', 'dua', 'nostalgia']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidBook(data) {
+      return data.keys().hasAll([
+          'authorId', 'title', 'authorName', 'category', 'description',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId', 'title', 'authorName', 'publisher', 'publishDate',
+          'subject', 'category', 'description', 'coverUrl', 'buyLink',
+          'contactInfo', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.authorId is string && isValidId(data.authorId)
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 200
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && isOptionalString(data, 'publisher', 160)
+        && isOptionalString(data, 'publishDate', 40)
+        && isOptionalString(data, 'subject', 160)
+        && data.category in ['ইসলামিক বই', 'গবেষণামূলক বই', 'অনুবাদ', 'সাহিত্য', 'ইতিহাস', 'অন্যান্য']
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 2500
+        && isOptionalString(data, 'coverUrl', 350000)
+        && isOptionalString(data, 'buyLink', 300)
+        && isOptionalString(data, 'contactInfo', 160)
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBusiness(data) {
+      return data.keys().hasAll([
+          'ownerId', 'ownerName', 'name', 'category', 'description',
+          'shariahCompliantDeclared', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'ownerName', 'name', 'logoUrl', 'bannerUrl', 'category',
+          'description', 'productsServices', 'address', 'phone',
+          'facebookPage', 'website', 'orderLink', 'shariahCompliantDeclared',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId)
+        && data.ownerName is string && data.ownerName.size() >= 2 && data.ownerName.size() <= 120
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 160
+        && isOptionalString(data, 'logoUrl', 350000)
+        && isOptionalString(data, 'bannerUrl', 350000)
+        && data.category in ['অনলাইন শপ', 'পোশাক', 'বই ও প্রকাশনা', 'প্রযুক্তি ও আইটি', 'শিক্ষা ও প্রশিক্ষণ', 'কৃষি', 'খাদ্যপণ্য', 'অন্যান্য']
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 2500
+        && isOptionalString(data, 'productsServices', 1000)
+        && isOptionalString(data, 'address', 250)
+        && isOptionalString(data, 'phone', 40)
+        && isOptionalString(data, 'facebookPage', 250)
+        && isOptionalString(data, 'website', 250)
+        && isOptionalString(data, 'orderLink', 250)
+        && data.shariahCompliantDeclared is bool && data.shariahCompliantDeclared == true
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll([
+          'authorId', 'authorName', 'title', 'content', 'category',
+          'isPinned', 'isUrgent', 'published', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId', 'authorName', 'title', 'content', 'category',
+          'isPinned', 'isUrgent', 'published', 'createdAt', 'updatedAt'
+        ])
+        && data.authorId is string && isValidId(data.authorId)
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && data.content is string && data.content.size() >= 5 && data.content.size() <= 5000
+        && data.category in ['ব্যাচের সভা', 'পুনর্মিলনী', 'বিশেষ দাওয়াত', 'আর্থিক সহযোগিতা', 'জরুরি সংবাদ', 'অন্যান্য']
+        && data.isPinned is bool
+        && data.isUrgent is bool
+        && data.published is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll([
+          'authorId', 'title', 'date', 'location', 'description',
+          'isPast', 'published', 'rsvpCount', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId', 'title', 'date', 'time', 'location', 'description',
+          'bannerUrl', 'galleryUrls', 'isPast', 'published', 'rsvpCount',
+          'createdAt', 'updatedAt'
+        ])
+        && data.authorId is string && isValidId(data.authorId)
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && data.date is string && data.date.size() >= 3 && data.date.size() <= 60
+        && isOptionalString(data, 'time', 60)
+        && data.location is string && data.location.size() >= 2 && data.location.size() <= 200
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 4000
+        && isOptionalString(data, 'bannerUrl', 350000)
+        && (!('galleryUrls' in data) || isBoundedImageList(data.galleryUrls, 8))
+        && data.isPast is bool
+        && data.published is bool
+        && data.rsvpCount is number && data.rsvpCount >= 0 && data.rsvpCount <= 50000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEventRsvp(data, eventId, userId) {
+      return data.keys().hasAll(['eventId', 'userId', 'memberName', 'attendance', 'guestsCount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['eventId', 'userId', 'memberName', 'attendance', 'guestsCount', 'note', 'createdAt', 'updatedAt'])
+        && data.eventId == eventId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.memberName is string && data.memberName.size() >= 2 && data.memberName.size() <= 120
+        && data.attendance in ['confirmed', 'interested']
+        && data.guestsCount is number && data.guestsCount >= 1 && data.guestsCount <= 10
+        && isOptionalString(data, 'note', 300)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCollaboration(data) {
+      return data.keys().hasAll([
+          'authorId', 'authorName', 'type', 'title', 'content',
+          'skills', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId', 'authorName', 'authorDistrict', 'type', 'title',
+          'content', 'skills', 'contactMethod', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.authorId is string && isValidId(data.authorId)
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && isOptionalString(data, 'authorDistrict', 80)
+        && data.type in ['দক্ষতা প্রকাশ', 'সহযোগিতার অনুরোধ', 'চাকরি ও কাজের সুযোগ', 'পরামর্শ']
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && data.content is string && data.content.size() >= 10 && data.content.size() <= 3000
+        && isBoundedStringList(data.skills, 10)
+        && isOptionalString(data, 'contactMethod', 200)
+        && data.status in ['open', 'resolved']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCollaborationReply(data, postId) {
+      return data.keys().hasAll(['collaborationId', 'authorId', 'authorName', 'message', 'createdAt'])
+        && data.keys().hasOnly(['collaborationId', 'authorId', 'authorName', 'message', 'createdAt'])
+        && data.collaborationId == postId
+        && data.authorId is string && data.authorId == request.auth.uid && isValidId(data.authorId)
+        && data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 120
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 1000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidBookmark(data) {
+      return data.keys().hasAll(['userId', 'targetType', 'targetId', 'targetTitle', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'targetType', 'targetId', 'targetTitle', 'createdAt'])
+        && data.userId == request.auth.uid && isValidId(data.userId)
+        && data.targetType in ['memory', 'book', 'business', 'collaboration']
+        && data.targetId is string && isValidId(data.targetId)
+        && data.targetTitle is string && data.targetTitle.size() >= 1 && data.targetTitle.size() <= 200
+        && data.createdAt is timestamp;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['recipientId', 'senderId', 'type', 'title', 'message', 'isRead', 'createdAt'])
+        && data.keys().hasOnly(['recipientId', 'senderId', 'type', 'title', 'message', 'linkSection', 'isRead', 'createdAt'])
+        && data.recipientId is string && isValidId(data.recipientId)
+        && data.senderId is string && isValidId(data.senderId)
+        && data.type in ['registration', 'approval', 'book', 'memory', 'announcement', 'event', 'system']
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 160
+        && data.message is string && data.message.size() >= 2 && data.message.size() <= 500
+        && isOptionalString(data, 'linkSection', 60)
+        && data.isRead is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['reporterId', 'reporterName', 'targetType', 'targetId', 'reason', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['reporterId', 'reporterName', 'targetType', 'targetId', 'targetTitle', 'reason', 'status', 'createdAt', 'updatedAt'])
+        && data.reporterId is string && isValidId(data.reporterId)
+        && data.reporterName is string && data.reporterName.size() >= 2 && data.reporterName.size() <= 120
+        && data.targetType in ['memory', 'book', 'business', 'collaboration', 'member']
+        && data.targetId is string && isValidId(data.targetId)
+        && isOptionalString(data, 'targetTitle', 200)
+        && data.reason is string && data.reason.size() >= 5 && data.reason.size() <= 800
+        && data.status in ['open', 'reviewed', 'dismissed']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdmin(data, adminId) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'role', 'addedBy', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'name', 'role', 'addedBy', 'createdAt'])
+        && data.uid == adminId && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.role in ['super_admin', 'admin', 'moderator']
+        && data.addedBy is string && data.addedBy == request.auth.uid && isValidId(data.addedBy)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['siteName', 'subtitle', 'heroQuote', 'showDemoData', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly([
+          'siteName', 'subtitle', 'logoUrl', 'heroQuote', 'batchInfo',
+          'madrasahName', 'madrasahLocation', 'footerMotto', 'showDemoData',
+          'updatedBy', 'updatedAt'
+        ])
+        && data.siteName is string && data.siteName.size() >= 2 && data.siteName.size() <= 120
+        && data.subtitle is string && data.subtitle.size() <= 160
+        && isOptionalString(data, 'logoUrl', 350000)
+        && data.heroQuote is string && data.heroQuote.size() <= 800
+        && isOptionalString(data, 'batchInfo', 160)
+        && isOptionalString(data, 'madrasahName', 160)
+        && isOptionalString(data, 'madrasahLocation', 160)
+        && isOptionalString(data, 'footerMotto', 240)
+        && data.showDemoData is bool
+        && data.updatedBy == request.auth.uid && isValidId(data.updatedBy)
+        && data.updatedAt is timestamp;
+    }
+
+    // ==================== COLLECTION RULES ====================
+
+    // 1. Members Directory (Public non-PII profile)
+    match /members/{memberId} {
+      allow get: if isValidId(memberId) && (
+        existing().status == 'approved' || isOwner(memberId) || isAdmin()
+      );
+      allow list: if resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.uid == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerified() && isValidId(memberId)
+        && isValidMember(incoming(), memberId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          (isOwner(memberId) && incoming().status == 'pending') ||
+          isAdmin()
+        );
+      allow update: if isVerified() && isValidId(memberId)
+        && isValidMember(incoming(), memberId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            isOwner(memberId)
+            && existing().status != 'suspended'
+            && existing().status != 'rejected'
+            && incoming().status == existing().status
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'fullName', 'photoUrl', 'profession', 'professionCategory',
+              'workplace', 'studyInstitution', 'currentArea', 'district', 'upazila',
+              'jamaats', 'studyStartYear', 'studyEndYear', 'lastJamaat',
+              'completedDawra', 'connectedToMadrasah', 'bio', 'skills',
+              'website', 'facebook', 'otherSocial', 'birthDatePublic',
+              'showPhoneToMembers', 'showAddressToMembers', 'showFamilyToMembers',
+              'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(memberId) && isAdmin();
+
+      // 1a. Strictly Isolated Private PII (Owner or Admin ONLY)
+      match /private/{docId} {
+        allow get: if isValidId(memberId) && docId == 'info' && (isOwner(memberId) || isAdmin());
+        allow create: if isVerified() && isValidId(memberId) && docId == 'info'
+          && isValidMemberPrivate(incoming(), memberId)
+          && incoming().updatedAt == request.time
+          && (isOwner(memberId) || isAdmin());
+        allow update: if isVerified() && isValidId(memberId) && docId == 'info'
+          && isValidMemberPrivate(incoming(), memberId)
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() ||
+            (isOwner(memberId) && incoming().diff(existing()).affectedKeys().hasOnly([
+              'fatherName', 'motherName', 'birthDate', 'phone', 'altPhone',
+              'email', 'presentAddress', 'permanentAddress', 'maritalStatus',
+              'marriageYear', 'childrenCount', 'sonsCount', 'daughtersCount',
+              'consentGiven', 'updatedAt'
+            ]))
+          );
+        allow delete: if isValidId(memberId) && docId == 'info' && isAdmin();
+      }
+
+      // 1b. Member Opt-In Shared Contact (Approved Members, Owner, or Admin ONLY)
+      match /shared/{docId} {
+        allow get: if isValidId(memberId) && docId == 'contact' && (
+          isOwner(memberId) ||
+          isAdmin() ||
+          (
+            isApprovedMember() &&
+            exists(/databases/$(database)/documents/members/$(memberId)) &&
+            get(/databases/$(database)/documents/members/$(memberId)).data.status == 'approved'
+          )
+        );
+        allow create: if isVerified() && isValidId(memberId) && docId == 'contact'
+          && isValidMemberShared(incoming(), memberId)
+          && incoming().updatedAt == request.time
+          && (isOwner(memberId) || isAdmin());
+        allow update: if isVerified() && isValidId(memberId) && docId == 'contact'
+          && isValidMemberShared(incoming(), memberId)
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() ||
+            (isOwner(memberId) && incoming().diff(existing()).affectedKeys().hasOnly([
+              'sharedPhone', 'sharedAltPhone', 'sharedAddress',
+              'sharedMaritalStatus', 'sharedMarriageYear', 'sharedChildrenSummary', 'updatedAt'
+            ]))
+          );
+        allow delete: if isValidId(memberId) && docId == 'contact' && (isOwner(memberId) || isAdmin());
+      }
+    }
+
+    // 2. Member Education History
+    match /memberEducation/{memberId} {
+      allow get: if isValidId(memberId) && (
+        existing().status == 'approved' || isOwner(memberId) || isAdmin()
+      );
+      allow list: if resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.uid == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerified() && isValidId(memberId)
+        && isValidMemberEducation(incoming(), memberId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && ((isOwner(memberId) && incoming().status == 'pending') || isAdmin());
+      allow update: if isVerified() && isValidId(memberId)
+        && isValidMemberEducation(incoming(), memberId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            isOwner(memberId)
+            && incoming().status == existing().status
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'jamaats', 'startYear', 'endYear', 'lastJamaat', 'completedDawra',
+              'connectedToMadrasah', 'favoriteUstads', 'academicNotes', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(memberId) && isAdmin();
+    }
+
+    // 3. Memories Archive
+    match /memories/{memoryId} {
+      allow get: if isValidId(memoryId) && (
+        existing().status == 'approved'
+        || (isSignedIn() && existing().authorId == request.auth.uid)
+        || isAdmin()
+      );
+      allow list: if resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.authorId == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerified() && isValidId(memoryId)
+        && isValidMemory(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().likesCount == 0
+        && incoming().commentsCount == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (isApprovedMember() && incoming().status == 'pending')
+        );
+      allow update: if isVerified() && isValidId(memoryId)
+        && isValidMemory(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          // Action 1: Author edits own non-rejected memory
+          (
+            existing().authorId == request.auth.uid
+            && existing().status != 'rejected'
+            && incoming().status == existing().status
+            && incoming().likesCount == existing().likesCount
+            && incoming().commentsCount == existing().commentsCount
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'content', 'category', 'imageUrls', 'authorName', 'authorPhoto', 'updatedAt'
+            ])
+          ) ||
+          // Action 2: Approved member increments/decrements likesCount atomically with reaction doc
+          (
+            existing().status == 'approved'
+            && isApprovedMember()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt'])
+            && (
+              (incoming().likesCount == existing().likesCount + 1 &&
+               existsAfter(/databases/$(database)/documents/memories/$(memoryId)/reactions/$(request.auth.uid))) ||
+              (incoming().likesCount == existing().likesCount - 1 &&
+               !existsAfter(/databases/$(database)/documents/memories/$(memoryId)/reactions/$(request.auth.uid)))
+            )
+          ) ||
+          // Action 3: Approved member increments commentsCount on approved memory
+          (
+            existing().status == 'approved'
+            && isApprovedMember()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['commentsCount', 'updatedAt'])
+            && incoming().commentsCount == existing().commentsCount + 1
+          )
+        );
+      allow delete: if isValidId(memoryId) && (
+        isAdmin() || (isVerified() && existing().authorId == request.auth.uid)
+      );
+
+      // 3a. Memory Comments (Master Gate on parent memory)
+      match /comments/{commentId} {
+        allow get: if isValidId(memoryId) && isValidId(commentId) && (
+          get(/databases/$(database)/documents/memories/$(memoryId)).data.status == 'approved' || isAdmin()
+        );
+        allow list: if resource.data.memoryId == memoryId;
+        allow create: if isVerified() && isValidId(memoryId) && isValidId(commentId)
+          && isValidComment(incoming(), memoryId)
+          && incoming().createdAt == request.time
+          && isApprovedMember()
+          && exists(/databases/$(database)/documents/memories/$(memoryId))
+          && get(/databases/$(database)/documents/memories/$(memoryId)).data.status == 'approved';
+        allow delete: if isValidId(memoryId) && isValidId(commentId) && (
+          isAdmin() || (isVerified() && existing().authorId == request.auth.uid)
+        );
+      }
+
+      // 3b. Memory Reactions (Master Gate on parent memory)
+      match /reactions/{userId} {
+        allow get: if isValidId(memoryId) && isValidId(userId) && isSignedIn();
+        allow list: if resource.data.memoryId == memoryId;
+        allow create: if isVerified() && isValidId(memoryId) && isValidId(userId)
+          && isOwner(userId)
+          && isValidReaction(incoming(), memoryId, userId)
+          && incoming().createdAt == request.time
+          && isApprovedMember()
+          && exists(/databases/$(database)/documents/memories/$(memoryId))
+          && get(/databases/$(database)/documents/memories/$(memoryId)).data.status == 'approved';
+        allow delete: if isVerified() && isValidId(memoryId) && isValidId(userId)
+          && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // 4. Books & Publications
+    match /books/{bookId} {
+      allow get: if isValidId(bookId) && (
+        existing().status == 'approved'
+        || (isSignedIn() && existing().authorId == request.auth.uid)
+        || isAdmin()
+      );
+      allow list: if resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.authorId == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerified() && isValidId(bookId)
+        && isValidBook(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (isAdmin() || (isApprovedMember() && incoming().status == 'pending'));
+      allow update: if isVerified() && isValidId(bookId)
+        && isValidBook(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            existing().authorId == request.auth.uid
+            && existing().status != 'rejected'
+            && incoming().status == existing().status
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'authorName', 'publisher', 'publishDate', 'subject',
+              'category', 'description', 'coverUrl', 'buyLink', 'contactInfo', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(bookId) && (
+        isAdmin() || (isVerified() && existing().authorId == request.auth.uid)
+      );
+    }
+
+    // 5. Businesses & Ventures
+    match /businesses/{businessId} {
+      allow get: if isValidId(businessId) && (
+        existing().status == 'approved'
+        || (isSignedIn() && existing().ownerId == request.auth.uid)
+        || isAdmin()
+      );
+      allow list: if resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.ownerId == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerified() && isValidId(businessId)
+        && isValidBusiness(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (isAdmin() || (isApprovedMember() && incoming().status == 'pending'));
+      allow update: if isVerified() && isValidId(businessId)
+        && isValidBusiness(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid
+            && existing().status != 'rejected'
+            && incoming().status == existing().status
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'ownerName', 'name', 'logoUrl', 'bannerUrl', 'category',
+              'description', 'productsServices', 'address', 'phone',
+              'facebookPage', 'website', 'orderLink', 'shariahCompliantDeclared', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(businessId) && (
+        isAdmin() || (isVerified() && existing().ownerId == request.auth.uid)
+      );
+    }
+
+    // 6. Announcements & Notice Board
+    match /announcements/{announcementId} {
+      allow get: if isValidId(announcementId) && (existing().published == true || isAdmin());
+      allow list: if resource.data.published == true || isAdmin();
+      allow create: if isVerified() && isValidId(announcementId)
+        && isValidAnnouncement(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerified() && isValidId(announcementId)
+        && isValidAnnouncement(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow delete: if isValidId(announcementId) && isAdmin();
+    }
+
+    // 7. Events & Reunions
+    match /events/{eventId} {
+      allow get: if isValidId(eventId) && (existing().published == true || isAdmin());
+      allow list: if resource.data.published == true || isAdmin();
+      allow create: if isVerified() && isValidId(eventId)
+        && isValidEvent(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().rsvpCount == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerified() && isValidId(eventId)
+        && isValidEvent(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            existing().published == true
+            && existing().isPast == false
+            && isApprovedMember()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['rsvpCount', 'updatedAt'])
+            && (
+              (incoming().rsvpCount == existing().rsvpCount + 1 &&
+               existsAfter(/databases/$(database)/documents/events/$(eventId)/rsvps/$(request.auth.uid))) ||
+              (incoming().rsvpCount == existing().rsvpCount - 1 &&
+               !existsAfter(/databases/$(database)/documents/events/$(eventId)/rsvps/$(request.auth.uid)))
+            )
+          )
+        );
+      allow delete: if isValidId(eventId) && isAdmin();
+
+      // 7a. Event RSVPs (Master Gate on parent event)
+      match /rsvps/{userId} {
+        allow get: if isValidId(eventId) && isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+        allow create: if isVerified() && isValidId(eventId) && isValidId(userId)
+          && isOwner(userId)
+          && isValidEventRsvp(incoming(), eventId, userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isApprovedMember()
+          && exists(/databases/$(database)/documents/events/$(eventId))
+          && get(/databases/$(database)/documents/events/$(eventId)).data.published == true;
+        allow update: if isVerified() && isValidId(eventId) && isValidId(userId)
+          && isOwner(userId)
+          && isValidEventRsvp(incoming(), eventId, userId)
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['attendance', 'guestsCount', 'note', 'updatedAt']);
+        allow delete: if isVerified() && isValidId(eventId) && isValidId(userId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // 8. Collaboration & Mutual Aid
+    match /collaborations/{postId} {
+      allow get: if isValidId(postId) && isSignedIn();
+      allow list: if isSignedIn() && (resource.data.status in ['open', 'resolved']);
+      allow create: if isVerified() && isValidId(postId)
+        && isValidCollaboration(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isApprovedMember();
+      allow update: if isVerified() && isValidId(postId)
+        && isValidCollaboration(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            existing().authorId == request.auth.uid
+            && existing().status != 'resolved'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'content', 'skills', 'contactMethod', 'status', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(postId) && (
+        isAdmin() || (isVerified() && existing().authorId == request.auth.uid)
+      );
+
+      // 8a. Collaboration Replies (Master Gate on parent post)
+      match /replies/{replyId} {
+        allow get: if isValidId(postId) && isValidId(replyId) && isSignedIn();
+        allow list: if isSignedIn() && resource.data.collaborationId == postId;
+        allow create: if isVerified() && isValidId(postId) && isValidId(replyId)
+          && isValidCollaborationReply(incoming(), postId)
+          && incoming().createdAt == request.time
+          && isApprovedMember()
+          && exists(/databases/$(database)/documents/collaborations/$(postId));
+        allow delete: if isValidId(postId) && isValidId(replyId) && (
+          isAdmin() || (isVerified() && existing().authorId == request.auth.uid)
+        );
+      }
+    }
+
+    // 9. Bookmarks (Strictly personal)
+    match /bookmarks/{bookmarkId} {
+      allow get: if isValidId(bookmarkId) && isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidId(bookmarkId)
+        && isValidBookmark(incoming())
+        && incoming().createdAt == request.time;
+      allow delete: if isVerified() && isValidId(bookmarkId) && existing().userId == request.auth.uid;
+    }
+
+    // 10. Notifications
+    match /notifications/{notificationId} {
+      allow get: if isValidId(notificationId) && isSignedIn() && (
+        existing().recipientId == request.auth.uid || existing().recipientId == 'all' || isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.recipientId == request.auth.uid
+        || resource.data.recipientId == 'all'
+        || isAdmin()
+      );
+      allow create: if isVerified() && isValidId(notificationId)
+        && isValidNotification(incoming())
+        && incoming().senderId == request.auth.uid
+        && incoming().createdAt == request.time
+        && (
+          isAdmin() ||
+          (incoming().recipientId == 'admins' && incoming().type in ['registration', 'book', 'memory'])
+        );
+      allow update: if isVerified() && isValidId(notificationId)
+        && isValidNotification(incoming())
+        && incoming().recipientId == existing().recipientId
+        && incoming().senderId == existing().senderId
+        && incoming().createdAt == existing().createdAt
+        && (
+          isAdmin() ||
+          (existing().recipientId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']))
+        );
+      allow delete: if isValidId(notificationId) && (
+        isAdmin() || (isVerified() && existing().recipientId == request.auth.uid)
+      );
+    }
+
+    // 11. Moderation Reports
+    match /reports/{reportId} {
+      allow get: if isValidId(reportId) && (
+        isAdmin() || (isSignedIn() && existing().reporterId == request.auth.uid)
+      );
+      allow list: if isSignedIn() && (
+        resource.data.reporterId == request.auth.uid || isAdmin()
+      );
+      allow create: if isVerified() && isValidId(reportId)
+        && isValidReport(incoming())
+        && incoming().reporterId == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(reportId)
+        && isValidReport(incoming())
+        && incoming().reporterId == existing().reporterId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow delete: if isValidId(reportId) && isAdmin();
+    }
+
+    // 12. Admins Registry
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isVerified() && isValidId(adminId)
+        && isValidAdmin(incoming(), adminId)
+        && incoming().createdAt == request.time
+        && isAdmin();
+      allow update: if isVerified() && isValidId(adminId)
+        && isValidAdmin(incoming(), adminId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && isAdmin();
+      allow delete: if isValidId(adminId) && isAdmin() && adminId != request.auth.uid;
+    }
+
+    // 13. Site Settings (Public Read, Admin Write)
+    match /siteSettings/{settingId} {
+      allow get: if settingId == 'general';
+      allow create: if isVerified() && settingId == 'general'
+        && isValidSiteSettings(incoming())
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerified() && settingId == 'general'
+        && isValidSiteSettings(incoming())
+        && incoming().updatedAt == request.time
+        && isAdmin();
+    }
+  }
+}

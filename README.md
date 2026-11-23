@@ -1,2 +1,20 @@
-# ---.-
-একই প্রতিষ্ঠানে কাটানো জীবনের সেরা কিছু বছর, একই উস্তাদদের সান্নিধ্য, একই দরসে বসার স্মৃতি। সময়ের ব্যবধানে আমরা ছড়িয়ে পড়েছি দেশের বিভিন্ন প্রান্তে, কিন্তু আমাদের পরিচয় ও ভ্রাতৃত্ব অটুট। এই প্ল্যাটফর্ম আমাদের সেই সম্পর্ককে আরও দৃঢ় করার একটি ক্ষুদ্র প্রয়াস।
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
+
+# Run and deploy your AI Studio app
+
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/c93f5c59-a3f2-435d-add2-64400b6eaffd
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

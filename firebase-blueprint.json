@@ -1,0 +1,442 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "Public directory profile of a Jameul Uloom 2022-23 alumni member (non-PII).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "photoUrl": { "type": "string", "maxLength": 350000 },
+        "profession": { "type": "string", "maxLength": 120 },
+        "professionCategory": {
+          "type": "string",
+          "enum": ["শিক্ষকতা", "ইমামতি ও খতিব", "ব্যবসা ও উদ্যোক্তা", "চাকরি", "গবেষণা ও উচ্চশিক্ষা", "লেখালেখি ও অনুবাদ", "প্রযুক্তি ও ফ্রিল্যান্সিং", "অন্যান্য"]
+        },
+        "workplace": { "type": "string", "maxLength": 160 },
+        "studyInstitution": { "type": "string", "maxLength": 160 },
+        "currentArea": { "type": "string", "maxLength": 160 },
+        "district": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "upazila": { "type": "string", "maxLength": 80 },
+        "jamaats": { "type": "array", "description": "List of studied jamaats (max 15)" },
+        "studyStartYear": { "type": "string", "maxLength": 16 },
+        "studyEndYear": { "type": "string", "maxLength": 16 },
+        "lastJamaat": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "completedDawra": { "type": "boolean" },
+        "connectedToMadrasah": { "type": "boolean" },
+        "bio": { "type": "string", "maxLength": 1200 },
+        "skills": { "type": "array", "description": "List of skills (max 15)" },
+        "website": { "type": "string", "maxLength": 250 },
+        "facebook": { "type": "string", "maxLength": 250 },
+        "otherSocial": { "type": "string", "maxLength": 250 },
+        "birthDatePublic": { "type": "string", "maxLength": 16 },
+        "showPhoneToMembers": { "type": "boolean" },
+        "showAddressToMembers": { "type": "boolean" },
+        "showFamilyToMembers": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "district", "lastJamaat", "jamaats", "completedDawra", "connectedToMadrasah", "status", "createdAt", "updatedAt"]
+    },
+    "MemberPrivateInfo": {
+      "title": "MemberPrivateInfo",
+      "description": "Strictly isolated PII (phone, email, addresses, parents, family) accessible only to owner and admins.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fatherName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "motherName": { "type": "string", "maxLength": 120 },
+        "birthDate": { "type": "string", "maxLength": 20 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 30 },
+        "altPhone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 160 },
+        "presentAddress": { "type": "string", "maxLength": 300 },
+        "permanentAddress": { "type": "string", "maxLength": 300 },
+        "maritalStatus": { "type": "string", "enum": ["অবিবাহিত", "বিবাহিত", "প্রকাশে অনিচ্ছুক"] },
+        "marriageYear": { "type": "string", "maxLength": 12 },
+        "childrenCount": { "type": "number" },
+        "sonsCount": { "type": "number" },
+        "daughtersCount": { "type": "number" },
+        "consentGiven": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fatherName", "phone", "consentGiven", "updatedAt"]
+    },
+    "MemberSharedContact": {
+      "title": "MemberSharedContact",
+      "description": "Member-consented contact and family details shared strictly with approved alumni members.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sharedPhone": { "type": "string", "maxLength": 30 },
+        "sharedAltPhone": { "type": "string", "maxLength": 30 },
+        "sharedAddress": { "type": "string", "maxLength": 300 },
+        "sharedMaritalStatus": { "type": "string", "maxLength": 40 },
+        "sharedMarriageYear": { "type": "string", "maxLength": 12 },
+        "sharedChildrenSummary": { "type": "string", "maxLength": 120 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "updatedAt"]
+    },
+    "MemberEducation": {
+      "title": "MemberEducation",
+      "description": "Detailed madrasah education history record for an alumni member.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jamaats": { "type": "array" },
+        "startYear": { "type": "string", "maxLength": 16 },
+        "endYear": { "type": "string", "maxLength": 16 },
+        "lastJamaat": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "completedDawra": { "type": "boolean" },
+        "connectedToMadrasah": { "type": "boolean" },
+        "favoriteUstads": { "type": "string", "maxLength": 400 },
+        "academicNotes": { "type": "string", "maxLength": 600 },
+        "status": { "type": "string", "enum": ["pending", "approved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "jamaats", "lastJamaat", "completedDawra", "connectedToMadrasah", "status", "createdAt", "updatedAt"]
+    },
+    "Memory": {
+      "title": "Memory",
+      "description": "Alumni memory post with text and photos.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "authorPhoto": { "type": "string", "maxLength": 350000 },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 6000 },
+        "category": {
+          "type": "string",
+          "enum": ["স্মৃতিচারণ", "পুরোনো ছবি", "উস্তাদদের স্মৃতি", "সহপাঠীদের স্মৃতি", "মাদরাসার অনুষ্ঠান", "মজার ঘটনা", "বিশেষ অনুভূতি"]
+        },
+        "imageUrls": { "type": "array", "description": "Up to 4 image URLs or compressed data URLs" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "title", "content", "category", "imageUrls", "status", "likesCount", "commentsCount", "createdAt", "updatedAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Comment on a memory post.",
+      "type": "object",
+      "properties": {
+        "memoryId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memoryId", "authorId", "authorName", "content", "createdAt"]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "Reaction on a memory post by a signed-in member.",
+      "type": "object",
+      "properties": {
+        "memoryId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "type": { "type": "string", "enum": ["love", "dua", "nostalgia"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memoryId", "userId", "type", "createdAt"]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "Book or publication authored/translated by an alumni member.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "publisher": { "type": "string", "maxLength": 160 },
+        "publishDate": { "type": "string", "maxLength": 40 },
+        "subject": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "enum": ["ইসলামিক বই", "গবেষণামূলক বই", "অনুবাদ", "সাহিত্য", "ইতিহাস", "অন্যান্য"] },
+        "description": { "type": "string", "minLength": 10, "maxLength": 2500 },
+        "coverUrl": { "type": "string", "maxLength": 350000 },
+        "buyLink": { "type": "string", "maxLength": 300 },
+        "contactInfo": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "title", "authorName", "category", "description", "status", "createdAt", "updatedAt"]
+    },
+    "Business": {
+      "title": "Business",
+      "description": "Shariah-compliant business or venture owned by an alumni member.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "logoUrl": { "type": "string", "maxLength": 350000 },
+        "bannerUrl": { "type": "string", "maxLength": 350000 },
+        "category": { "type": "string", "enum": ["অনলাইন শপ", "পোশাক", "বই ও প্রকাশনা", "প্রযুক্তি ও আইটি", "শিক্ষা ও প্রশিক্ষণ", "কৃষি", "খাদ্যপণ্য", "অন্যান্য"] },
+        "description": { "type": "string", "minLength": 10, "maxLength": 2500 },
+        "productsServices": { "type": "string", "maxLength": 1000 },
+        "address": { "type": "string", "maxLength": 250 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "facebookPage": { "type": "string", "maxLength": 250 },
+        "website": { "type": "string", "maxLength": 250 },
+        "orderLink": { "type": "string", "maxLength": 250 },
+        "shariahCompliantDeclared": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "ownerName", "name", "category", "description", "shariahCompliantDeclared", "status", "createdAt", "updatedAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Official admin announcement or notice board item.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "content": { "type": "string", "minLength": 5, "maxLength": 5000 },
+        "category": { "type": "string", "enum": ["ব্যাচের সভা", "পুনর্মিলনী", "বিশেষ দাওয়াত", "আর্থিক সহযোগিতা", "জরুরি সংবাদ", "অন্যান্য"] },
+        "isPinned": { "type": "boolean" },
+        "isUrgent": { "type": "boolean" },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "title", "content", "category", "isPinned", "isUrgent", "published", "createdAt", "updatedAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Batch event or reunion.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "date": { "type": "string", "minLength": 3, "maxLength": 60 },
+        "time": { "type": "string", "maxLength": 60 },
+        "location": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "description": { "type": "string", "minLength": 10, "maxLength": 4000 },
+        "bannerUrl": { "type": "string", "maxLength": 350000 },
+        "galleryUrls": { "type": "array" },
+        "isPast": { "type": "boolean" },
+        "published": { "type": "boolean" },
+        "rsvpCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "title", "date", "location", "description", "isPast", "published", "rsvpCount", "createdAt", "updatedAt"]
+    },
+    "EventRsvp": {
+      "title": "EventRsvp",
+      "description": "Member RSVP / attendance confirmation for an event.",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "memberName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "attendance": { "type": "string", "enum": ["confirmed", "interested"] },
+        "guestsCount": { "type": "number" },
+        "note": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["eventId", "userId", "memberName", "attendance", "guestsCount", "createdAt", "updatedAt"]
+    },
+    "Collaboration": {
+      "title": "Collaboration",
+      "description": "Mutual aid, skills showcase, job opportunity, or advice post.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "authorDistrict": { "type": "string", "maxLength": 80 },
+        "type": { "type": "string", "enum": ["দক্ষতা প্রকাশ", "সহযোগিতার অনুরোধ", "চাকরি ও কাজের সুযোগ", "পরামর্শ"] },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 3000 },
+        "skills": { "type": "array" },
+        "contactMethod": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["open", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "type", "title", "content", "skills", "status", "createdAt", "updatedAt"]
+    },
+    "CollaborationReply": {
+      "title": "CollaborationReply",
+      "description": "Reply or offer of assistance on a collaboration post.",
+      "type": "object",
+      "properties": {
+        "collaborationId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["collaborationId", "authorId", "authorName", "message", "createdAt"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "User bookmark for a memory, book, business, or collaboration post.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetType": { "type": "string", "enum": ["memory", "book", "business", "collaboration"] },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetTitle": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "targetType", "targetId", "targetTitle", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User or community notification item.",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "type": { "type": "string", "enum": ["registration", "approval", "book", "memory", "announcement", "event", "system"] },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 2, "maxLength": 500 },
+        "linkSection": { "type": "string", "maxLength": 60 },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientId", "senderId", "type", "title", "message", "isRead", "createdAt"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Moderation report filed by a member for inappropriate content.",
+      "type": "object",
+      "properties": {
+        "reporterId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reporterName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "targetType": { "type": "string", "enum": ["memory", "book", "business", "collaboration", "member"] },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetTitle": { "type": "string", "maxLength": 200 },
+        "reason": { "type": "string", "minLength": 5, "maxLength": 800 },
+        "status": { "type": "string", "enum": ["open", "reviewed", "dismissed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reporterId", "reporterName", "targetType", "targetId", "reason", "status", "createdAt", "updatedAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized platform administrator or moderator record.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["super_admin", "admin", "moderator"] },
+        "addedBy": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "role", "addedBy", "createdAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Admin-configurable general site branding and homepage settings.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "subtitle": { "type": "string", "maxLength": 160 },
+        "logoUrl": { "type": "string", "maxLength": 350000 },
+        "heroQuote": { "type": "string", "maxLength": 800 },
+        "batchInfo": { "type": "string", "maxLength": 160 },
+        "madrasahName": { "type": "string", "maxLength": 160 },
+        "madrasahLocation": { "type": "string", "maxLength": 160 },
+        "footerMotto": { "type": "string", "maxLength": 240 },
+        "showDemoData": { "type": "boolean" },
+        "updatedBy": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["siteName", "subtitle", "heroQuote", "showDemoData", "updatedBy", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": { "$ref": "#/entities/Member" },
+      "description": "Public directory profiles (non-PII) of registered alumni members."
+    },
+    "/members/{memberId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/MemberPrivateInfo" },
+      "description": "Strictly isolated private PII (phone, addresses, parents, family) readable only by owner or admin."
+    },
+    "/members/{memberId}/shared/{docId}": {
+      "schema": { "$ref": "#/entities/MemberSharedContact" },
+      "description": "Opt-in contact/family summary shared strictly with approved alumni members."
+    },
+    "/memberEducation/{memberId}": {
+      "schema": { "$ref": "#/entities/MemberEducation" },
+      "description": "Member madrasah education history."
+    },
+    "/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/Memory" },
+      "description": "Alumni memories archive."
+    },
+    "/memories/{memoryId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/Comment" },
+      "description": "Comments on memory posts."
+    },
+    "/memories/{memoryId}/reactions/{userId}": {
+      "schema": { "$ref": "#/entities/Reaction" },
+      "description": "Per-user reactions on memory posts."
+    },
+    "/books/{bookId}": {
+      "schema": { "$ref": "#/entities/Book" },
+      "description": "Books and publications by alumni members."
+    },
+    "/businesses/{businessId}": {
+      "schema": { "$ref": "#/entities/Business" },
+      "description": "Shariah-compliant businesses and ventures by alumni members."
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "Official notices and announcements."
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/Event" },
+      "description": "Batch events and reunions."
+    },
+    "/events/{eventId}/rsvps/{userId}": {
+      "schema": { "$ref": "#/entities/EventRsvp" },
+      "description": "Member attendance confirmations for events."
+    },
+    "/collaborations/{postId}": {
+      "schema": { "$ref": "#/entities/Collaboration" },
+      "description": "Mutual collaboration, jobs, skills, and advice board."
+    },
+    "/collaborations/{postId}/replies/{replyId}": {
+      "schema": { "$ref": "#/entities/CollaborationReply" },
+      "description": "Replies to collaboration posts."
+    },
+    "/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "Personal bookmarks for each member."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Personal and broadcast notifications."
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Moderation reports submitted by members."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Authorized admin and moderator records."
+    },
+    "/siteSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Global site name, logo, and homepage settings."
+    }
+  }
+}
