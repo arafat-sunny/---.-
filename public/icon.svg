@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="42%" r="68%">
+      <stop offset="0%" stop-color="#135A3E" />
+      <stop offset="65%" stop-color="#0B3B28" />
+      <stop offset="100%" stop-color="#07271A" />
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0D898" />
+      <stop offset="50%" stop-color="#C9A24D" />
+      <stop offset="100%" stop-color="#A67E31" />
+    </linearGradient>
+    <linearGradient id="creamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EDE6D6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed Emerald Backdrop -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)" />
+
+  <!-- Subtle Outer Hairline Frame -->
+  <rect x="28" y="28" width="456" height="456" rx="76" fill="none" stroke="#C9A24D" stroke-opacity="0.28" stroke-width="3" />
+
+  <!-- Classic Islamic 8-Pointed Rub-el-Hizb Geometric Seal -->
+  <g transform="translate(256 256)">
+    <rect x="-152" y="-152" width="304" height="304" rx="18" fill="none" stroke="url(#goldGrad)" stroke-width="7" />
+    <rect x="-152" y="-152" width="304" height="304" rx="18" transform="rotate(45)" fill="none" stroke="url(#goldGrad)" stroke-width="7" />
+    <circle cx="0" cy="0" r="134" fill="#093020" fill-opacity="0.72" stroke="#C9A24D" stroke-opacity="0.35" stroke-width="2.5" />
+  </g>
+
+  <!-- Architectural Dome + Crescent + Open Hadith Book Emblem -->
+  <g transform="translate(256 256)">
+    <!-- Finial & Crescent -->
+    <line x1="0" y1="-102" x2="0" y2="-82" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" />
+    <circle cx="0" cy="-106" r="5" fill="#F0D898" />
+
+    <!-- Dome Silhouette -->
+    <path
+      d="M 0 -84 C -32 -70, -68 -44, -68 -10 L 68 -10 C 68 -44, 32 -70, 0 -84 Z"
+      fill="url(#goldGrad)"
+    />
+
+    <!-- Arched Inner Sanctuary Window -->
+    <path
+      d="M 0 -58 C -16 -48, -28 -32, -28 -10 L 28 -10 C 28 -32, 16 -48, 0 -58 Z"
+      fill="#0B3B28"
+    />
+
+    <!-- Horizontal Base Cornice -->
+    <rect x="-78" y="-10" width="156" height="10" rx="5" fill="url(#creamGrad)" />
+
+    <!-- Open Book (Darul Hadith) Below -->
+    <path
+      d="M -6 24 C -26 14, -56 14, -76 22 L -76 74 C -54 66, -26 66, -6 78 Z"
+      fill="url(#creamGrad)"
+    />
+    <path
+      d="M 6 24 C 26 14, 56 14, 76 22 L 76 74 C 54 66, 26 66, 6 78 Z"
+      fill="url(#creamGrad)"
+    />
+    <!-- Book Spine Accent -->
+    <path
+      d="M -6 78 Q 0 84 6 78"
+      fill="none"
+      stroke="url(#goldGrad)"
+      stroke-width="6"
+      stroke-linecap="round"
+    />
+    <!-- Subtle Page Lines -->
+    <line x1="-58" y1="36" x2="-22" y2="38" stroke="#0B3B28" stroke-opacity="0.35" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="-58" y1="50" x2="-22" y2="52" stroke="#0B3B28" stroke-opacity="0.35" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="22" y1="38" x2="58" y2="36" stroke="#0B3B28" stroke-opacity="0.35" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="22" y1="52" x2="58" y2="50" stroke="#0B3B28" stroke-opacity="0.35" stroke-width="3.5" stroke-linecap="round" />
+  </g>
+</svg>

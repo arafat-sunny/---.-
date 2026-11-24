@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useAlumni } from '../context/AlumniContext';
 import { ActiveRoute } from '../types';
+import { PWAInstallButton } from './PWAInstallUI';
 
 interface NavbarProps {
   activeRoute: ActiveRoute;
   onNavigate: (route: ActiveRoute) => void;
   onOpenAuth: () => void;
+  onOpenPwaGuide: () => void;
 }
 
 const NAV_ITEMS: { route: ActiveRoute; label: string }[] = [
@@ -17,7 +19,12 @@ const NAV_ITEMS: { route: ActiveRoute; label: string }[] = [
   { route: 'activities', label: 'ঘোষণা ও অনুষ্ঠান' },
 ];
 
-export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenAuth }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  activeRoute,
+  onNavigate,
+  onOpenAuth,
+  onOpenPwaGuide,
+}) => {
   const { user, myMember, isAdmin, siteSettings } = useAlumni();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#F8F6F0]/95 backdrop-blur-md border-b border-[#E4DFD2] no-print">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 lg:gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 lg:h-16 flex items-center justify-between gap-2 sm:gap-4 lg:gap-8">
         {/* Zone 1: Single-line Brand Wordmark (shrinks gracefully on narrow mobile screens) */}
         <button
           type="button"
@@ -185,6 +192,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute, onNavigate, onOpenA
                 )}
               </>
             )}
+
+            <div className="pt-1">
+              <PWAInstallButton
+                variant="drawer"
+                onOpenGuide={onOpenPwaGuide}
+                onActionComplete={() => setMobileOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}

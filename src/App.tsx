@@ -5,6 +5,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { OfflineIndicator, PWAInstallGuideModal } from './components/PWAInstallUI';
 import { QrShareModal } from './components/CommonUI';
 import { HomePage } from './pages/HomePage';
 import { DirectoryPage } from './pages/DirectoryPage';
@@ -24,6 +26,7 @@ function AppShell() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [regQrOpen, setRegQrOpen] = useState(false);
+  const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
 
   // Sync page title dynamically with admin-configured siteSettings
   useEffect(() => {
@@ -64,6 +67,7 @@ function AppShell() {
         activeRoute={route}
         onNavigate={navigate}
         onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenPwaGuide={() => setPwaGuideOpen(true)}
       />
 
       <main className="flex-1">
@@ -115,10 +119,31 @@ function AppShell() {
         {route === 'admin' && <AdminDashboardPage />}
       </main>
 
-      <Footer onNavigate={navigate} onOpenRegistrationQr={() => setRegQrOpen(true)} />
+      <Footer
+        onNavigate={navigate}
+        onOpenRegistrationQr={() => setRegQrOpen(true)}
+        onOpenPwaGuide={() => setPwaGuideOpen(true)}
+      />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeRoute={route}
+        onNavigate={navigate}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenRegistrationQr={() => setRegQrOpen(true)}
+        onOpenPwaGuide={() => setPwaGuideOpen(true)}
+      />
+
+      {/* Offline Connectivity Indicator */}
+      <OfflineIndicator />
 
       {/* Global Modals */}
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+
+      <PWAInstallGuideModal
+        isOpen={pwaGuideOpen}
+        onClose={() => setPwaGuideOpen(false)}
+      />
 
       <QrShareModal
         isOpen={regQrOpen}
@@ -131,7 +156,7 @@ function AppShell() {
       {/* Toast Notifications */}
       {toasts.length > 0 && (
         <div
-          className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] no-print"
+          className="fixed bottom-20 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] no-print"
           aria-live="polite"
         >
           {toasts.map((t) => (

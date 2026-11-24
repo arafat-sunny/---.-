@@ -2,18 +2,24 @@ import React from 'react';
 import { QrCode } from 'lucide-react';
 import { useAlumni } from '../context/AlumniContext';
 import { ActiveRoute } from '../types';
+import { PWAInstallButton } from './PWAInstallUI';
 
 interface FooterProps {
   onNavigate: (route: ActiveRoute) => void;
   onOpenRegistrationQr: () => void;
+  onOpenPwaGuide: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenRegistrationQr }) => {
+export const Footer: React.FC<FooterProps> = ({
+  onNavigate,
+  onOpenRegistrationQr,
+  onOpenPwaGuide,
+}) => {
   const { siteSettings, isAdmin } = useAlumni();
 
   return (
     <footer className="bg-[#0B3B28] text-[#E6ECE8] islamic-lattice border-t border-[#C9A24D]/30 mt-20 no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-24 lg:pb-14">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-white/10">
           <div className="md:col-span-5 space-y-3">
             <p className="font-arabic text-base text-[#E5C987]">جامعة العلوم — ميربور ١٤، دكا</p>
@@ -117,14 +123,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenRegistrationQr
             <p className="text-xs text-[#C7D7CE] leading-relaxed">
               ব্যাচের যেকোনো ভাইয়ের কাছে সরাসরি নিবন্ধন লিংক অথবা কিউআর কোড শেয়ার করুন।
             </p>
-            <button
-              type="button"
-              onClick={onOpenRegistrationQr}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A24D] text-[#0B2B1E] text-xs font-semibold hover:bg-[#D8B463] transition-colors cursor-pointer"
-            >
-              <QrCode className="w-4 h-4" />
-              নিবন্ধন কিউআর কোড দেখুন
-            </button>
+            <div className="flex flex-col items-start gap-2.5">
+              <button
+                type="button"
+                onClick={onOpenRegistrationQr}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A24D] text-[#0B2B1E] text-xs font-semibold hover:bg-[#D8B463] transition-colors cursor-pointer"
+              >
+                <QrCode className="w-4 h-4" />
+                নিবন্ধন কিউআর কোড দেখুন
+              </button>
+              <PWAInstallButton variant="footer" onOpenGuide={onOpenPwaGuide} />
+            </div>
           </div>
         </div>
 
@@ -133,6 +142,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenRegistrationQr
             © ২০২৬ {siteSettings.siteName} · {siteSettings.subtitle}
           </p>
           <p>সদস্যদের ব্যক্তিগত তথ্যের গোপনীয়তা ও নিরাপত্তা সংরক্ষিত</p>
+        </div>
+
+        <div className="pt-4 mt-4 border-t border-white/10 text-center text-xs text-[#B4C8BD]">
+          ডেভেলপার:{' '}
+          <a
+            href="https://facebook.com/akhanesunny"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-[#E5C987] hover:text-white underline underline-offset-4 transition-colors"
+          >
+            আরাফাত সানী
+          </a>
         </div>
       </div>
     </footer>
